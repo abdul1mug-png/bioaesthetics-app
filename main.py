@@ -43,6 +43,11 @@ def create_app() -> FastAPI:
     async def health_check():
         return {"status": "ok", "version": "1.0.0"}
 
+    @app.get("/")
+    async def serve_frontend():
+        from fastapi.responses import FileResponse
+        return FileResponse("bioaesthetic-ui (1).html")
+
     from routes import auth_router, skin_router, physique_router, hormone_router, dashboard_router
     app.include_router(auth_router, prefix="/auth", tags=["Auth"])
     app.include_router(skin_router, prefix="/skin", tags=["Skin"])
