@@ -1,0 +1,2262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioAesthetic — Biometric Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #080a0e;
+    --bg2: #0d1117;
+    --bg3: #131920;
+    --border: #1e2733;
+    --border2: #2a3545;
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --gold-dim: rgba(201,168,76,0.12);
+    --text: #e8edf5;
+    --text2: #8a9bb0;
+    --text3: #4a5a6e;
+    --green: #2dd4a0;
+    --red: #f06060;
+    --blue: #4a9eff;
+    --panel: rgba(13,17,23,0.95);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 30% 50%, rgba(201,168,76,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(74,158,255,0.04) 0%, transparent 50%),
+                var(--bg);
+  }
+
+  .auth-card {
+    width: 420px;
+    padding: 48px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    position: relative;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .auth-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .auth-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 32px;
+    color: var(--text);
+    margin-bottom: 6px;
+    line-height: 1.1;
+  }
+
+  .auth-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 40px;
+    letter-spacing: 0.05em;
+  }
+
+  .tab-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .tab-btn.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus {
+    border-color: var(--gold);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--gold);
+    color: #080a0e;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover { background: var(--gold2); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .auth-error {
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: rgba(240,96,96,0.1);
+    border: 1px solid rgba(240,96,96,0.3);
+    font-size: 11px;
+    color: var(--red);
+    display: none;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  #app {
+    display: none;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 220px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo-tag {
+    font-family: 'Syne', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .sidebar-logo-name {
+    font-family: 'Instrument Serif', serif;
+    font-size: 20px;
+    color: var(--text);
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 0;
+  }
+
+  .nav-section {
+    padding: 0 16px;
+    margin-bottom: 4px;
+  }
+
+  .nav-section-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 12px 8px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 0.03em;
+    border: 1px solid transparent;
+  }
+
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+
+  .nav-item.active {
+    background: var(--gold-dim);
+    color: var(--gold);
+    border-color: rgba(201,168,76,0.2);
+  }
+
+  .nav-icon { width: 14px; opacity: 0.7; font-size: 13px; }
+
+  .sidebar-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .user-tag {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+
+  .user-email {
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .logout-btn {
+    margin-top: 12px;
+    width: 100%;
+    padding: 8px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    margin-left: 220px;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: rgba(8,10,14,0.8);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+
+  .topbar-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 0.1em;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  .page-content {
+    padding: 32px;
+    display: none;
+  }
+
+  .page-content.active { display: block; animation: fadeUp 0.3s ease; }
+
+  /* ── DASHBOARD PAGE ── */
+  .page-header {
+    margin-bottom: 32px;
+  }
+
+  .page-header-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .page-header-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 36px;
+    color: var(--text);
+  }
+
+  /* ── YOUTH INDEX HERO ── */
+  .youth-hero {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 1px;
+  }
+
+  .youth-score-panel {
+    background: var(--bg2);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .youth-score-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.08) 0%, transparent 70%);
+  }
+
+  .score-ring {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin-bottom: 24px;
+  }
+
+  .score-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .score-ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 3;
+  }
+
+  .score-ring-fill {
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 3;
+    stroke-linecap: butt;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1);
+    filter: drop-shadow(0 0 6px rgba(201,168,76,0.5));
+  }
+
+  .score-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .score-number {
+    font-family: 'Instrument Serif', serif;
+    font-size: 52px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .score-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+
+  .score-grade {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .score-delta {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .youth-breakdown {
+    background: var(--bg2);
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-content: center;
+  }
+
+  .component-card {
+    padding: 20px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .component-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.8s ease;
+  }
+
+  .component-card.loaded::after { transform: scaleX(1); }
+
+  .component-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .component-score {
+    font-family: 'Instrument Serif', serif;
+    font-size: 36px;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+
+  .component-bar-bg {
+    height: 2px;
+    background: var(--border);
+    margin-top: 12px;
+  }
+
+  .component-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  /* ── METRICS ROW ── */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 1px;
+  }
+
+  .metric-tile {
+    background: var(--bg2);
+    padding: 24px;
+  }
+
+  .metric-tile-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .metric-tile-value {
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .metric-tile-sub {
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  /* ── DATA TABLE ── */
+  .data-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .data-panel-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .data-panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  .data-panel-body { padding: 24px; }
+
+  /* ── FORMS ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-field label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+
+  .form-field input, .form-field select {
+    padding: 11px 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .form-field input:focus, .form-field select:focus {
+    border-color: var(--gold);
+  }
+
+  .form-field select option { background: var(--bg3); }
+
+  .btn-submit {
+    padding: 13px 32px;
+    background: var(--gold);
+    color: #080a0e;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
+  }
+
+  .btn-submit:hover { background: var(--gold2); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── SKIN PAGE ── */
+  .upload-zone {
+    border: 1px dashed var(--border2);
+    padding: 48px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: var(--bg3);
+  }
+
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--gold); background: var(--gold-dim); }
+
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  .upload-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+
+  .upload-text {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+
+  .upload-sub { font-size: 10px; color: var(--text3); }
+
+  .skin-result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-top: 24px;
+  }
+
+  .skin-metric {
+    background: var(--bg2);
+    padding: 24px;
+  }
+
+  .skin-metric-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .skin-metric-value {
+    font-family: 'Instrument Serif', serif;
+    font-size: 32px;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .skin-bar-bg {
+    height: 2px;
+    background: var(--border);
+  }
+
+  .skin-bar-fill {
+    height: 100%;
+    transition: width 1s ease;
+    width: 0%;
+  }
+
+  .recs-list {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .rec-item {
+    display: flex;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--bg3);
+    border-left: 2px solid var(--gold);
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .rec-num {
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    padding: 14px 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    font-size: 12px;
+    color: var(--text);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    max-width: 320px;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { border-left-color: var(--red); }
+
+  /* ── LOADING ── */
+  .loading {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .loading span {
+    width: 4px; height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: bounce 0.8s infinite;
+  }
+
+  .loading span:nth-child(2) { animation-delay: 0.1s; }
+  .loading span:nth-child(3) { animation-delay: 0.2s; }
+
+  /* ── WORKOUT PLAN ── */
+  .workout-day {
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .workout-day-header {
+    padding: 12px 16px;
+    background: var(--bg3);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .exercise-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .exercise-table th {
+    padding: 8px 16px;
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .exercise-table td {
+    padding: 10px 16px;
+    font-size: 11px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .exercise-table tr:last-child td { border-bottom: none; }
+  .exercise-table tr:hover td { background: var(--bg3); color: var(--text); }
+
+  /* ── MACRO DISPLAY ── */
+  .macro-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 24px;
+  }
+
+  .macro-tile {
+    background: var(--bg2);
+    padding: 24px;
+    text-align: center;
+  }
+
+  .macro-tile-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .macro-tile-val {
+    font-family: 'Instrument Serif', serif;
+    font-size: 36px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .macro-tile-unit {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  .hidden { display: none !important; }
+
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 32px 0;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border: 1px solid var(--border2);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+
+  .chip.gold { border-color: var(--gold); color: var(--gold); }
+  .chip.green { border-color: var(--green); color: var(--green); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 40px;
+    color: var(--text3);
+    font-size: 12px;
+    line-height: 2;
+  }
+
+  .empty-state-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.3; }
+
+  /* ══ NEW DASHBOARD STYLES ══ */
+  .dash-greeting-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 32px; border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  .dash-greeting-time { font-family:'Instrument Serif',serif; font-size:22px; color:var(--text); }
+  .dash-greeting-sub { font-size:10px; color:var(--text3); letter-spacing:0.1em; margin-top:3px; }
+  .dash-live-chip {
+    font-size:10px; letter-spacing:0.12em; color:var(--green);
+    display:flex; align-items:center; gap:6px;
+    border:1px solid rgba(45,212,160,0.2); padding:5px 12px;
+  }
+  .dash-refresh-btn {
+    font-family:'DM Mono',monospace; font-size:10px; letter-spacing:0.1em;
+    color:var(--text3); background:none; border:1px solid var(--border);
+    padding:5px 12px; cursor:pointer; text-transform:uppercase;
+    transition:all 0.2s;
+  }
+  .dash-refresh-btn:hover { color:var(--gold); border-color:var(--gold); }
+
+  /* HERO ROW */
+  .dash-hero-row {
+    display: grid;
+    grid-template-columns: 300px 1fr 280px;
+    gap: 1px; background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* SCORE CARD */
+  .dash-score-card {
+    background: var(--bg2); padding: 32px 24px;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; overflow: hidden;
+  }
+  .dash-score-card-bg {
+    position:absolute; inset:0;
+    background: radial-gradient(ellipse at 50% 40%, rgba(201,168,76,0.07) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .dash-score-label-top {
+    font-size:9px; letter-spacing:0.3em; color:var(--gold);
+    text-transform:uppercase; margin-bottom:16px;
+  }
+  .dash-score-main { position:relative; width:220px; height:220px; }
+  .dash-arc-svg { width:100%; height:100%; }
+  .dash-score-inner {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  .dash-score-number {
+    font-family:'Instrument Serif',serif; font-size:64px;
+    color:var(--text); line-height:1;
+  }
+  .dash-score-slash { font-size:11px; color:var(--text3); margin-top:2px; }
+  .dash-score-grade-badge {
+    margin-top:10px; padding:4px 14px;
+    border:1px solid var(--gold); color:var(--gold);
+    font-family:'Syne',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.2em;
+  }
+  .dash-score-footer {
+    display:flex; gap:0; width:100%; margin-top:24px;
+    border-top:1px solid var(--border); padding-top:16px;
+    justify-content:space-between;
+  }
+  .dash-score-footer-item { text-align:center; flex:1; }
+  .dash-score-footer-label { font-size:8px; letter-spacing:0.15em; color:var(--text3); text-transform:uppercase; margin-bottom:4px; }
+  .dash-score-footer-val { font-size:13px; color:var(--text2); }
+
+  /* RADAR CARD */
+  .dash-radar-card {
+    background: var(--bg2); padding: 24px 28px;
+  }
+
+  /* BIO AGE CARD */
+  .dash-bioage-card { background: var(--bg2); padding: 24px 28px; }
+  .dash-bioage-display {
+    display:flex; align-items:baseline; gap:8px; margin:20px 0 16px;
+  }
+  .dash-bioage-number {
+    font-family:'Instrument Serif',serif; font-size:56px;
+    color:var(--text); line-height:1;
+  }
+  .dash-bioage-unit { font-size:14px; color:var(--text3); }
+  .dash-bioage-bar-labels {
+    display:flex; justify-content:space-between;
+    font-size:9px; color:var(--text3); margin-bottom:6px;
+  }
+  .dash-bioage-track {
+    height:6px; background:var(--border); position:relative; border-radius:0;
+  }
+  .dash-bioage-fill {
+    height:100%; background:linear-gradient(90deg, var(--green), var(--gold), var(--red));
+    transition:width 1.5s ease;
+  }
+  .dash-bioage-marker {
+    position:absolute; top:-5px; width:2px; height:16px;
+    background:var(--text); transition:left 1.5s ease;
+  }
+  .dash-bioage-interp {
+    font-size:11px; color:var(--text3); margin-top:10px; line-height:1.6;
+  }
+  .dash-tier-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;
+  }
+  .dash-tier-item {
+    padding:8px 10px; background:var(--bg3); border:1px solid var(--border);
+    font-size:9px; letter-spacing:0.05em;
+  }
+  .dash-tier-item-label { color:var(--text3); margin-bottom:3px; text-transform:uppercase; }
+  .dash-tier-item-val { color:var(--text2); font-size:11px; }
+
+  /* CARD SHARED */
+  .dash-card-header {
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .dash-card-title { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.2em; color:var(--text2); text-transform:uppercase; }
+  .dash-card-sub { font-size:10px; color:var(--text3); }
+
+  /* GAUGES ROW */
+  .dash-gauges-row {
+    display:grid; grid-template-columns:repeat(4,1fr);
+    gap:1px; background:var(--border);
+    border-bottom:1px solid var(--border);
+  }
+  .dash-gauge-tile {
+    background:var(--bg2); padding:24px;
+    display:flex; flex-direction:column; align-items:center;
+    cursor:pointer; transition:background 0.2s;
+    position:relative; overflow:hidden;
+  }
+  .dash-gauge-tile:hover { background:var(--bg3); }
+  .dash-gauge-tile::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+    transform:scaleX(0); transform-origin:left; transition:transform 0.4s ease;
+  }
+  .dash-gauge-tile:hover::after { transform:scaleX(1); }
+  .dash-gauge-label { font-size:9px; letter-spacing:0.2em; color:var(--text3); text-transform:uppercase; margin-bottom:12px; }
+  .dash-gauge-svg { width:120px; height:70px; overflow:visible; }
+  .dash-gauge-score { font-family:'Instrument Serif',serif; font-size:28px; color:var(--text); margin-top:8px; }
+  .dash-gauge-grade { font-size:9px; letter-spacing:0.15em; color:var(--text3); margin-top:2px; }
+  .dash-gauge-weight { font-size:9px; color:var(--text3); margin-top:6px; }
+
+  /* BOTTOM ROW */
+  .dash-bottom-row {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:1px; background:var(--border);
+  }
+  .dash-breakdown-card, .dash-insight-card {
+    background:var(--bg2); padding:28px;
+  }
+
+  /* BREAKDOWN TABLE */
+  .dash-bk-row {
+    display:flex; align-items:center; gap:12px;
+    padding:14px 0; border-bottom:1px solid var(--border);
+  }
+  .dash-bk-row:last-child { border-bottom:none; }
+  .dash-bk-label { font-size:11px; color:var(--text2); width:120px; flex-shrink:0; }
+  .dash-bk-bar-wrap { flex:1; }
+  .dash-bk-bar-bg { height:3px; background:var(--border); }
+  .dash-bk-bar-fill { height:100%; transition:width 1.2s ease; }
+  .dash-bk-pts { font-size:12px; color:var(--text); width:48px; text-align:right; flex-shrink:0; }
+  .dash-bk-max { font-size:10px; color:var(--text3); }
+
+  /* INSIGHTS */
+  .dash-insight-item {
+    display:flex; gap:14px; padding:14px 0;
+    border-bottom:1px solid var(--border);
+    animation:fadeUp 0.4s ease both;
+  }
+  .dash-insight-item:last-child { border-bottom:none; }
+  .dash-insight-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+  .dash-insight-title { font-size:11px; color:var(--text); margin-bottom:4px; }
+  .dash-insight-body { font-size:10px; color:var(--text3); line-height:1.7; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ AUTH ══════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">BioAesthetic Platform</div>
+    <div class="auth-title">Biometric<br><em>Intelligence</em></div>
+    <div class="auth-sub">Enterprise-grade biometric optimization</div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div id="tab-login">
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" onclick="doLogin()">AUTHENTICATE</button>
+    </div>
+
+    <div id="tab-register" class="hidden">
+      <div class="field">
+        <label>Display Name</label>
+        <input type="text" id="reg-name" placeholder="Your name" />
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Minimum 8 characters" />
+      </div>
+      <button class="btn-primary" onclick="doRegister()">CREATE ACCOUNT</button>
+    </div>
+
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-tag">BioAesthetic</div>
+      <div class="sidebar-logo-name">Platform</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-label">Overview</div>
+        <div class="nav-item active" onclick="showPage('dashboard', this)">
+          <span class="nav-icon">◈</span> Youth Index
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Analysis</div>
+        <div class="nav-item" onclick="showPage('skin', this)">
+          <span class="nav-icon">◉</span> Skin Analysis
+        </div>
+        <div class="nav-item" onclick="showPage('physique', this)">
+          <span class="nav-icon">◎</span> Physique & Macros
+        </div>
+        <div class="nav-item" onclick="showPage('hormone', this)">
+          <span class="nav-icon">◐</span> Hormone Metrics
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-tag">Signed in as</div>
+      <div class="user-email" id="sidebar-email">—</div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Youth Index Dashboard</div>
+      <div class="topbar-status">
+        <div class="status-dot"></div>
+        API CONNECTED · localhost:8000
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div class="page-content active" id="page-dashboard">
+
+      <div id="dashboard-loading" class="empty-state">
+        <div class="loading"><span></span><span></span><span></span></div>
+        <div style="margin-top:16px; font-size:11px; color:var(--text3);">Computing Youth Index...</div>
+      </div>
+
+      <div id="dashboard-empty" class="empty-state hidden">
+        <div class="empty-state-icon">◈</div>
+        Complete Skin, Physique, and Hormone modules to unlock your Youth Index.
+      </div>
+
+      <div id="dashboard-data" class="hidden">
+
+        <!-- GREETING BAR -->
+        <div class="dash-greeting-bar">
+          <div>
+            <div class="dash-greeting-time" id="dash-greeting">Good morning</div>
+            <div class="dash-greeting-sub" id="dash-date-str"></div>
+          </div>
+          <div style="display:flex; gap:12px; align-items:center;">
+            <div class="dash-live-chip">
+              <span class="status-dot" style="width:5px;height:5px;display:inline-block;background:var(--green);border-radius:50%;animation:pulse 2s infinite;"></span>
+              LIVE · <span id="dash-clock"></span>
+            </div>
+            <button class="dash-refresh-btn" onclick="loadDashboard()">↻ REFRESH</button>
+          </div>
+        </div>
+
+        <!-- TOP HERO ROW -->
+        <div class="dash-hero-row">
+
+          <!-- BIG SCORE CARD -->
+          <div class="dash-score-card">
+            <div class="dash-score-card-bg"></div>
+            <div class="dash-score-label-top">YOUTH INDEX</div>
+            <div class="dash-score-main">
+              <svg class="dash-arc-svg" viewBox="0 0 220 220">
+                <defs>
+                  <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#c9a84c"/>
+                    <stop offset="100%" stop-color="#e8c97a"/>
+                  </linearGradient>
+                </defs>
+                <!-- track -->
+                <circle cx="110" cy="110" r="90" fill="none" stroke="#1e2733" stroke-width="8"/>
+                <!-- glow -->
+                <circle cx="110" cy="110" r="90" fill="none" stroke="url(#arcGrad)" stroke-width="8"
+                  stroke-linecap="round"
+                  stroke-dasharray="565.49" stroke-dashoffset="565.49"
+                  id="dash-arc" style="transform:rotate(-90deg);transform-origin:110px 110px;transition:stroke-dashoffset 1.8s cubic-bezier(0.4,0,0.2,1);filter:drop-shadow(0 0 8px rgba(201,168,76,0.6));"/>
+                <!-- inner rings -->
+                <circle cx="110" cy="110" r="74" fill="none" stroke="#1a2130" stroke-width="1"/>
+                <circle cx="110" cy="110" r="58" fill="none" stroke="#141b25" stroke-width="1"/>
+              </svg>
+              <div class="dash-score-inner">
+                <div class="dash-score-number" id="dash-score">0</div>
+                <div class="dash-score-slash">/ 100</div>
+                <div class="dash-score-grade-badge" id="dash-grade-badge">—</div>
+              </div>
+            </div>
+            <div class="dash-score-footer">
+              <div class="dash-score-footer-item">
+                <div class="dash-score-footer-label">COMPUTED</div>
+                <div class="dash-score-footer-val" id="dash-computed-at">—</div>
+              </div>
+              <div class="dash-score-footer-item">
+                <div class="dash-score-footer-label">WEEKLY DELTA</div>
+                <div class="dash-score-footer-val" id="dash-delta">—</div>
+              </div>
+              <div class="dash-score-footer-item">
+                <div class="dash-score-footer-label">GRADE</div>
+                <div class="dash-score-footer-val" id="dash-grade">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RADAR CHART CARD -->
+          <div class="dash-radar-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">COMPONENT RADAR</span>
+              <span class="dash-card-sub">All four pillars</span>
+            </div>
+            <div style="position:relative; height:260px; display:flex; align-items:center; justify-content:center;">
+              <canvas id="dash-radar" style="max-height:260px;"></canvas>
+            </div>
+          </div>
+
+          <!-- BIO AGE CARD -->
+          <div class="dash-bioage-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">BIOLOGICAL AGE</span>
+              <span class="dash-card-sub">Estimated</span>
+            </div>
+            <div class="dash-bioage-display">
+              <div class="dash-bioage-number" id="dash-bioage">—</div>
+              <div class="dash-bioage-unit">yrs</div>
+            </div>
+            <div class="dash-bioage-bar-wrap">
+              <div class="dash-bioage-bar-labels">
+                <span>20</span><span>40</span><span>60</span><span>80</span>
+              </div>
+              <div class="dash-bioage-track">
+                <div class="dash-bioage-fill" id="dash-bioage-fill"></div>
+                <div class="dash-bioage-marker" id="dash-bioage-marker"></div>
+              </div>
+            </div>
+            <div class="dash-bioage-interp" id="dash-bioage-interp"></div>
+            <div class="dash-card-header" style="margin-top:24px;">
+              <span class="dash-card-title">PERFORMANCE TIER</span>
+            </div>
+            <div class="dash-tier-grid" id="dash-tier-grid"></div>
+          </div>
+        </div>
+
+        <!-- COMPONENT GAUGES ROW -->
+        <div class="dash-gauges-row" id="dash-gauges-row"></div>
+
+        <!-- BOTTOM ROW: BREAKDOWN TABLE + SPIDER -->
+        <div class="dash-bottom-row">
+          <div class="dash-breakdown-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">WEIGHTED BREAKDOWN</span>
+              <span class="dash-card-sub">Points contributed</span>
+            </div>
+            <div id="dash-breakdown-table"></div>
+          </div>
+          <div class="dash-insight-card">
+            <div class="dash-card-header">
+              <span class="dash-card-title">SCORE INSIGHTS</span>
+              <span class="dash-card-sub">What to focus on</span>
+            </div>
+            <div id="dash-insights"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── SKIN PAGE ── -->
+    <div class="page-content hidden" id="page-skin">
+      <div class="page-header">
+        <div class="page-header-label">Dermal Biometrics</div>
+        <div class="page-header-title">Skin Analysis</div>
+      </div>
+
+      <div class="data-panel">
+        <div class="data-panel-header">
+          <div class="data-panel-title">Upload Facial Image</div>
+          <span class="chip">JPEG · PNG · WEBP</span>
+        </div>
+        <div class="data-panel-body">
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="skin-file" accept="image/*" onchange="handleFileSelect(event)" />
+            <div class="upload-icon">⬆</div>
+            <div class="upload-text">Drop image or click to upload</div>
+            <div class="upload-sub">Max 10MB · Clear frontal photo recommended</div>
+          </div>
+          <div id="upload-preview" class="hidden" style="margin-top:16px; display:flex; gap:16px; align-items:center;">
+            <img id="preview-img" style="width:80px; height:80px; object-fit:cover; border:1px solid var(--border);" />
+            <div>
+              <div style="font-size:12px; color:var(--text2); margin-bottom:8px;" id="preview-name"></div>
+              <button class="btn-submit" onclick="doSkinUpload()" id="skin-upload-btn">ANALYSE SKIN</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="skin-results" class="hidden">
+        <div class="data-panel">
+          <div class="data-panel-header">
+            <div class="data-panel-title">Analysis Results</div>
+            <div id="skin-analysis-id" style="font-size:10px; color:var(--text3);"></div>
+          </div>
+          <div class="data-panel-body">
+            <div style="display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start;">
+              <div>
+                <div class="skin-result-grid" id="skin-metrics-grid"></div>
+              </div>
+              <div style="background:var(--bg3); border:1px solid var(--border); padding:24px;">
+                <div style="font-size:9px; letter-spacing:0.2em; color:var(--text3); text-transform:uppercase; margin-bottom:16px;">Metric Radar</div>
+                <canvas id="skin-radar-chart" height="260"></canvas>
+              </div>
+            </div>
+            <div id="skin-recs"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PHYSIQUE PAGE ── -->
+    <div class="page-content hidden" id="page-physique">
+      <div class="page-header">
+        <div class="page-header-label">Body Composition</div>
+        <div class="page-header-title">Physique & Macros</div>
+      </div>
+
+      <div class="data-panel">
+        <div class="data-panel-header">
+          <div class="data-panel-title">Body Metrics Input</div>
+        </div>
+        <div class="data-panel-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Height (cm)</label>
+              <input type="number" id="p-height" placeholder="175" />
+            </div>
+            <div class="form-field">
+              <label>Weight (kg)</label>
+              <input type="number" id="p-weight" placeholder="75" />
+            </div>
+            <div class="form-field">
+              <label>Body Fat %</label>
+              <input type="number" id="p-bodyfat" placeholder="18" step="0.1" />
+            </div>
+            <div class="form-field">
+              <label>Age</label>
+              <input type="number" id="p-age" placeholder="25" />
+            </div>
+            <div class="form-field">
+              <label>Activity Level</label>
+              <select id="p-activity">
+                <option value="sedentary">Sedentary</option>
+                <option value="light">Light (1-3 days/wk)</option>
+                <option value="moderate" selected>Moderate (3-5 days/wk)</option>
+                <option value="active">Active (6-7 days/wk)</option>
+                <option value="very_active">Very Active</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Goal</label>
+              <select id="p-goal">
+                <option value="fat_loss">Fat Loss</option>
+                <option value="muscle_gain" selected>Muscle Gain</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="recomposition">Recomposition</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Training Days / Week</label>
+              <input type="number" id="p-days" placeholder="4" min="1" max="7" />
+            </div>
+            <div class="form-field">
+              <label>Preferred Split</label>
+              <select id="p-split">
+                <option value="">Auto-select</option>
+                <option value="full_body">Full Body</option>
+                <option value="upper_lower">Upper / Lower</option>
+                <option value="ppl">Push Pull Legs</option>
+                <option value="bro_split">Bro Split</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-submit" onclick="doPhysique()">CALCULATE PLAN</button>
+        </div>
+      </div>
+
+      <div id="physique-results" class="hidden">
+        <div class="data-panel" style="margin-top:24px;">
+          <div class="data-panel-header">
+            <div class="data-panel-title">Energy & Macronutrient Plan</div>
+          </div>
+          <div class="data-panel-body">
+            <div class="macro-row" id="macro-row"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:8px;">
+              <div style="background:var(--bg3); border:1px solid var(--border); padding:24px;">
+                <div style="font-size:9px; letter-spacing:0.2em; color:var(--text3); text-transform:uppercase; margin-bottom:16px;">Macro Split</div>
+                <canvas id="macro-doughnut" height="220"></canvas>
+              </div>
+              <div style="background:var(--bg3); border:1px solid var(--border); padding:24px;">
+                <div style="font-size:9px; letter-spacing:0.2em; color:var(--text3); text-transform:uppercase; margin-bottom:16px;">Calorie Breakdown (kcal)</div>
+                <canvas id="macro-bar" height="220"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="data-panel" style="margin-top:24px;">
+          <div class="data-panel-header">
+            <div class="data-panel-title">Training Programme</div>
+            <div id="split-label" style="font-size:10px; color:var(--gold);"></div>
+          </div>
+          <div class="data-panel-body" id="workout-plan"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HORMONE PAGE ── -->
+    <div class="page-content hidden" id="page-hormone">
+      <div class="page-header">
+        <div class="page-header-label">Lifestyle Proxy Model</div>
+        <div class="page-header-title">Hormone Metrics</div>
+      </div>
+
+      <div class="data-panel">
+        <div class="data-panel-header">
+          <div class="data-panel-title">Daily Lifestyle Log</div>
+          <span class="chip">TODAY</span>
+        </div>
+        <div class="data-panel-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Sleep Hours</label>
+              <input type="number" id="h-sleep" placeholder="7.5" step="0.5" min="0" max="24" />
+            </div>
+            <div class="form-field">
+              <label>Morning Sunlight (min)</label>
+              <input type="number" id="h-sun" placeholder="15" />
+            </div>
+            <div class="form-field">
+              <label>Step Count</label>
+              <input type="number" id="h-steps" placeholder="8000" />
+            </div>
+            <div class="form-field">
+              <label>Zinc Intake (mg)</label>
+              <input type="number" id="h-zinc" placeholder="11" step="0.5" />
+            </div>
+            <div class="form-field">
+              <label>Stress Rating (0–10)</label>
+              <input type="number" id="h-stress" placeholder="4" min="0" max="10" />
+            </div>
+          </div>
+          <button class="btn-submit" onclick="doHormone()">LOG METRICS</button>
+        </div>
+      </div>
+
+      <div id="hormone-results" class="hidden">
+        <div class="data-panel" style="margin-top:24px;">
+          <div class="data-panel-header">
+            <div class="data-panel-title">Hormone Optimization Score</div>
+          </div>
+          <div class="data-panel-body">
+            <div style="display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start;">
+              <div>
+                <div class="metrics-row" id="hormone-metrics-row" style="margin-bottom:24px;"></div>
+                <div id="hormone-recs"></div>
+              </div>
+              <div style="background:var(--bg3); border:1px solid var(--border); padding:24px;">
+                <div style="font-size:9px; letter-spacing:0.2em; color:var(--text3); text-transform:uppercase; margin-bottom:16px;">Factor Breakdown</div>
+                <canvas id="hormone-radar" height="260"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:8000';
+let token = localStorage.getItem('bio_token') || '';
+let userEmail = localStorage.getItem('bio_email') || '';
+
+// ── INIT ──
+if (token) bootApp();
+
+function bootApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('sidebar-email').textContent = userEmail;
+  loadDashboard();
+}
+
+// ── AUTH ──
+function switchTab(tab) {
+  document.getElementById('tab-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('tab-register').classList.toggle('hidden', tab !== 'register');
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-password').value;
+  if (!email || !pass) return showAuthError('Please fill in all fields.');
+  try {
+    const r = await api('/auth/login', 'POST', {email, password: pass}, false);
+    token = r.access_token;
+    userEmail = email;
+    localStorage.setItem('bio_token', token);
+    localStorage.setItem('bio_email', email);
+    bootApp();
+  } catch(e) { showAuthError(e.message || 'Login failed.'); }
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const pass = document.getElementById('reg-password').value;
+  if (!name || !email || !pass) return showAuthError('Please fill in all fields.');
+  try {
+    await api('/auth/register', 'POST', {display_name: name, email, password: pass}, false);
+    showToast('Account created — signing you in…');
+    document.getElementById('login-email').value = email;
+    document.getElementById('login-password').value = pass;
+    switchTab('login');
+    setTimeout(doLogin, 600);
+  } catch(e) { showAuthError(e.message || 'Registration failed.'); }
+}
+
+function doLogout() {
+  token = ''; userEmail = '';
+  localStorage.removeItem('bio_token');
+  localStorage.removeItem('bio_email');
+  location.reload();
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ── NAV ──
+function showPage(page, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page-content').forEach(p => {
+    p.classList.remove('active');
+    p.classList.add('hidden');
+  });
+  const target = document.getElementById('page-' + page);
+  target.classList.remove('hidden');
+  target.classList.add('active');
+  const titles = {dashboard:'Youth Index Dashboard', skin:'Skin Analysis', physique:'Physique & Macros', hormone:'Hormone Metrics'};
+  document.getElementById('topbar-title').textContent = titles[page];
+  if (page === 'dashboard') loadDashboard();
+}
+
+// ── API ──
+async function api(path, method='GET', body=null, auth=true) {
+  const headers = {'Content-Type': 'application/json'};
+  if (auth && token) headers['Authorization'] = 'Bearer ' + token;
+  const opts = {method, headers};
+  if (body && method !== 'GET') opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP ${r.status}`);
+  }
+  return r.json();
+}
+
+async function apiForm(path, formData) {
+  const r = await fetch(API + path, {
+    method: 'POST',
+    headers: {'Authorization': 'Bearer ' + token},
+    body: formData
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP ${r.status}`);
+  }
+  return r.json();
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  document.getElementById('dashboard-loading').classList.remove('hidden');
+  document.getElementById('dashboard-data').classList.add('hidden');
+  document.getElementById('dashboard-empty').classList.add('hidden');
+  try {
+    const d = await api('/dashboard/youth_index');
+    renderDashboard(d);
+  } catch(e) {
+    document.getElementById('dashboard-loading').classList.add('hidden');
+    document.getElementById('dashboard-empty').classList.remove('hidden');
+  }
+}
+
+function renderDashboard(d) {
+  document.getElementById('dashboard-loading').classList.add('hidden');
+  document.getElementById('dashboard-data').classList.remove('hidden');
+
+  const score = d.youth_index;
+  const grade = d.grade;
+
+  // Animate score counter
+  let cur = 0;
+  const target = score;
+  const step = () => {
+    cur = Math.min(cur + Math.ceil((target - cur) / 8 + 1), target);
+    document.getElementById('dash-score').textContent = cur;
+    if (cur < target) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+
+  // Arc
+  const circ = 565.49;
+  setTimeout(() => {
+    document.getElementById('dash-arc').style.strokeDashoffset = circ - (circ * score / 100);
+  }, 100);
+
+  // Grade badge color
+  const gradeColors = {A:'#2dd4a0', B:'#c9a84c', C:'#4a9eff', D:'#f06060', F:'#f06060'};
+  const gc = gradeColors[grade] || '#c9a84c';
+  const gradeBadge = document.getElementById('dash-score-grade-badge') || document.getElementById('dash-grade-badge');
+  if (gradeBadge) { gradeBadge.textContent = 'GRADE ' + grade; gradeBadge.style.borderColor = gc; gradeBadge.style.color = gc; }
+
+  document.getElementById('dash-grade').textContent = grade;
+  document.getElementById('dash-delta').textContent = d.weekly_delta !== null
+    ? (d.weekly_delta >= 0 ? '+' : '') + d.weekly_delta
+    : '—';
+  const computedAt = d.computed_at ? new Date(d.computed_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+  document.getElementById('dash-computed-at').textContent = computedAt;
+
+  // Biological age estimate
+  const skinAge = d.skin_component ? Math.round(20 + (100 - d.skin_component) * 0.4) : null;
+  const bioAge = skinAge || Math.round(25 + (100 - score) * 0.35);
+  document.getElementById('dash-bioage').textContent = bioAge;
+  const agePct = Math.max(0, Math.min(100, ((bioAge - 20) / 60) * 100));
+  setTimeout(() => {
+    document.getElementById('dash-bioage-fill').style.width = agePct + '%';
+    document.getElementById('dash-bioage-marker').style.left = 'calc(' + agePct + '% - 1px)';
+  }, 400);
+  const bioInterps = [
+    [0,30,'Exceptional biological youth. Your metrics reflect outstanding cellular health.'],
+    [30,35,'Excellent condition. Well below chronological age norms.'],
+    [35,42,'Good. Consistent with healthy lifestyle practices.'],
+    [42,50,'Moderate. Lifestyle optimisation can meaningfully improve this.'],
+    [50,100,'Elevated. Focus on sleep, stress and dietary improvements.'],
+  ];
+  const interp = bioInterps.find(([lo,hi]) => bioAge >= lo && bioAge < hi);
+  document.getElementById('dash-bioage-interp').textContent = interp ? interp[2] : '';
+
+  // Tier grid
+  const tiers = [
+    {label:'Skin Tier', val: scoreTier(d.skin_component)},
+    {label:'Physique Tier', val: scoreTier(d.physique_component)},
+    {label:'Hormone Tier', val: scoreTier(d.hormone_component)},
+    {label:'Recovery Tier', val: scoreTier(d.recovery_component)},
+  ];
+  document.getElementById('dash-tier-grid').innerHTML = tiers.map(t => `
+    <div class="dash-tier-item">
+      <div class="dash-tier-item-label">${t.label}</div>
+      <div class="dash-tier-item-val">${t.val}</div>
+    </div>
+  `).join('');
+
+  // Radar chart
+  if (window._dashRadar) window._dashRadar.destroy();
+  const rCtx = document.getElementById('dash-radar').getContext('2d');
+  window._dashRadar = new Chart(rCtx, {
+    type: 'radar',
+    data: {
+      labels: ['Skin', 'Physique', 'Hormone', 'Recovery'],
+      datasets: [{
+        data: [d.skin_component||0, d.physique_component||0, d.hormone_component||0, d.recovery_component||0],
+        backgroundColor: 'rgba(201,168,76,0.08)',
+        borderColor: '#c9a84c',
+        borderWidth: 2,
+        pointBackgroundColor: ['#c9a84c','#4a9eff','#2dd4a0','#a78bfa'],
+        pointRadius: 5,
+        pointHoverRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ' ' + ctx.raw.toFixed(1) + ' / 100' },
+          backgroundColor: '#0d1117', borderColor: '#1e2733', borderWidth: 1,
+          titleColor: '#c9a84c', bodyColor: '#8a9bb0',
+          titleFont: { family: 'DM Mono', size: 10 },
+          bodyFont: { family: 'DM Mono', size: 11 },
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          grid: { color: '#1e2733' },
+          angleLines: { color: '#1e2733' },
+          pointLabels: { color: '#8a9bb0', font: { size: 11, family: 'Syne', weight: '600' } },
+          ticks: { display: false, stepSize: 25 },
+        }
+      },
+      animation: { duration: 1200 }
+    }
+  });
+
+  // Gauges row
+  const comps = [
+    {label:'Skin', val: d.skin_component, weight:'30%', color:'#c9a84c'},
+    {label:'Physique', val: d.physique_component, weight:'30%', color:'#4a9eff'},
+    {label:'Hormone', val: d.hormone_component, weight:'20%', color:'#2dd4a0'},
+    {label:'Recovery', val: d.recovery_component, weight:'20%', color:'#a78bfa'},
+  ];
+  document.getElementById('dash-gauges-row').innerHTML = comps.map((c,i) => `
+    <div class="dash-gauge-tile" id="gtile-${i}" style="--g-color:${c.color}">
+      <div class="dash-gauge-label">${c.label}</div>
+      <svg class="dash-gauge-svg" viewBox="0 0 120 70">
+        <path d="M10,65 A55,55,0,0,1,110,65" fill="none" stroke="#1e2733" stroke-width="8" stroke-linecap="round"/>
+        <path d="M10,65 A55,55,0,0,1,110,65" fill="none" stroke="${c.color}" stroke-width="8" stroke-linecap="round"
+          stroke-dasharray="${Math.PI*55}" stroke-dashoffset="${Math.PI*55}"
+          id="gauge-arc-${i}" style="transition:stroke-dashoffset 1.4s ${i*0.15}s cubic-bezier(0.4,0,0.2,1); filter:drop-shadow(0 0 4px ${c.color}88);"/>
+        <text x="60" y="60" text-anchor="middle" fill="${c.color}" font-size="18" font-family="serif">${(c.val||0).toFixed(0)}</text>
+      </svg>
+      <div class="dash-gauge-grade" style="color:${c.color}">${scoreTier(c.val)}</div>
+      <div class="dash-gauge-weight">Weight: ${c.weight}</div>
+    </div>
+  `).join('');
+  comps.forEach((c,i) => {
+    setTimeout(() => {
+      const el = document.getElementById('gauge-arc-' + i);
+      if (el) {
+        const total = Math.PI * 55;
+        el.style.strokeDashoffset = total - (total * (c.val||0) / 100);
+      }
+      const tile = document.getElementById('gtile-' + i);
+      if (tile) tile.style.setProperty('--tile-color', c.color);
+    }, 100 + i * 80);
+  });
+
+  // Breakdown table
+  const bk = d.breakdown;
+  const bkItems = [
+    {label:'Skin', pts: bk.skin_weighted, max:30, color:'#c9a84c'},
+    {label:'Physique', pts: bk.physique_weighted, max:30, color:'#4a9eff'},
+    {label:'Hormone', pts: bk.hormone_weighted, max:20, color:'#2dd4a0'},
+    {label:'Recovery', pts: bk.recovery_weighted, max:20, color:'#a78bfa'},
+  ];
+  document.getElementById('dash-breakdown-table').innerHTML = bkItems.map(b => `
+    <div class="dash-bk-row">
+      <div class="dash-bk-label">${b.label}</div>
+      <div class="dash-bk-bar-wrap">
+        <div class="dash-bk-bar-bg">
+          <div class="dash-bk-bar-fill" style="width:${(b.pts/b.max)*100}%; background:${b.color};"></div>
+        </div>
+      </div>
+      <div class="dash-bk-pts" style="color:${b.color}">${b.pts.toFixed(1)} <span class="dash-bk-max">/ ${b.max}</span></div>
+    </div>
+  `).join('');
+
+  // Insights
+  const insights = generateInsights(d);
+  document.getElementById('dash-insights').innerHTML = insights.map((ins,i) => `
+    <div class="dash-insight-item" style="animation-delay:${i*0.1}s">
+      <div class="dash-insight-icon">${ins.icon}</div>
+      <div>
+        <div class="dash-insight-title">${ins.title}</div>
+        <div class="dash-insight-body">${ins.body}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function scoreTier(v) {
+  if (!v) return '—';
+  if (v >= 90) return 'ELITE';
+  if (v >= 80) return 'OPTIMAL';
+  if (v >= 70) return 'STRONG';
+  if (v >= 60) return 'GOOD';
+  if (v >= 50) return 'FAIR';
+  return 'NEEDS WORK';
+}
+
+function generateInsights(d) {
+  const insights = [];
+  const comps = [
+    {name:'Skin', val:d.skin_component, icon:'◉'},
+    {name:'Physique', val:d.physique_component, icon:'◎'},
+    {name:'Hormone', val:d.hormone_component, icon:'◐'},
+    {name:'Recovery', val:d.recovery_component, icon:'◈'},
+  ];
+  const sorted = [...comps].sort((a,b) => (a.val||0)-(b.val||0));
+  const weakest = sorted[0];
+  const strongest = sorted[sorted.length-1];
+
+  if (weakest.val < 65) {
+    insights.push({
+      icon:'⚠',
+      title:`${weakest.name} is your weakest pillar (${(weakest.val||0).toFixed(1)})`,
+      body:`Improving your ${weakest.name.toLowerCase()} score will have the greatest impact on your Youth Index. Focus your next session here.`
+    });
+  }
+  if (strongest.val >= 70) {
+    insights.push({
+      icon:'◆',
+      title:`${strongest.name} is your strongest pillar (${(strongest.val||0).toFixed(1)})`,
+      body:`Your ${strongest.name.toLowerCase()} metrics are well optimised. Maintain your current habits in this area.`
+    });
+  }
+  if (d.youth_index >= 70) {
+    insights.push({ icon:'↑', title:'Above average biometric profile', body:'Your composite score places you in the top tier. Weekly logging will reveal trend direction.' });
+  } else if (d.youth_index >= 55) {
+    insights.push({ icon:'→', title:'Mid-range score — consistent improvement possible', body:'Regular data entry across all modules gives the algorithm more signal to optimise your recommendations.' });
+  } else {
+    insights.push({ icon:'↓', title:'Score has significant room to improve', body:'Begin with sleep quality and morning sunlight — these have outsized effects on hormone and recovery scores.' });
+  }
+  insights.push({ icon:'◷', title:'Log daily for trend tracking', body:'Weekly delta data unlocks once you have two measurements. The system will surface progress patterns automatically.' });
+  return insights;
+}
+
+// Clock & greeting
+function updateClock() {
+  const now = new Date();
+  document.getElementById('dash-clock').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const hr = now.getHours();
+  const greeting = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  const gEl = document.getElementById('dash-greeting');
+  if (gEl) gEl.textContent = greeting;
+  const dEl = document.getElementById('dash-date-str');
+  if (dEl) dEl.textContent = now.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── SKIN ──
+let selectedFile = null;
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  selectedFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('preview-img').src = url;
+  document.getElementById('preview-name').textContent = file.name + ' · ' + (file.size/1024).toFixed(0) + ' KB';
+  document.getElementById('upload-preview').classList.remove('hidden');
+  document.getElementById('upload-preview').style.display = 'flex';
+}
+
+async function doSkinUpload() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('skin-upload-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"><span></span><span></span><span></span></span>';
+  try {
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    const d = await apiForm('/skin/upload_face', fd);
+    renderSkinResults(d);
+    showToast('Skin analysis complete');
+  } catch(e) {
+    showToast('Analysis failed: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ANALYSE SKIN';
+  }
+}
+
+function renderSkinResults(d) {
+  document.getElementById('skin-results').classList.remove('hidden');
+  document.getElementById('skin-analysis-id').textContent = 'ID: ' + d.analysis_id;
+
+  const metrics = [
+    {label:'Composite Score', val: d.composite_skin_score, pct: d.composite_skin_score, color: '#c9a84c'},
+    {label:'Pigmentation', val: (d.pigmentation_score*100).toFixed(0), pct: d.pigmentation_score*100, color: '#4a9eff'},
+    {label:'Pore Density', val: (d.pore_score*100).toFixed(0), pct: d.pore_score*100, color: '#4a9eff'},
+    {label:'Acne Index', val: (d.acne_score*100).toFixed(0), pct: d.acne_score*100, color: '#f06060'},
+    {label:'Inflammation', val: (d.inflammation_score*100).toFixed(0), pct: d.inflammation_score*100, color: '#f06060'},
+    {label:'Skin Age Est.', val: d.skin_age_estimate + ' yrs', pct: Math.min(d.skin_age_estimate, 100), color: '#2dd4a0'},
+  ];
+
+  document.getElementById('skin-metrics-grid').innerHTML = metrics.map(m => `
+    <div class="skin-metric">
+      <div class="skin-metric-label">${m.label}</div>
+      <div class="skin-metric-value">${m.val}</div>
+      <div class="skin-bar-bg">
+        <div class="skin-bar-fill" style="background:${m.color}; width:${m.pct}%"></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Radar chart
+  if (window._skinChart) window._skinChart.destroy();
+  const skinCtx = document.getElementById('skin-radar-chart').getContext('2d');
+  window._skinChart = new Chart(skinCtx, {
+    type: 'radar',
+    data: {
+      labels: ['Acne\n(lower=better)', 'Pigmentation\n(lower=better)', 'Pores\n(lower=better)', 'Inflammation\n(lower=better)', 'Under-eye\n(lower=better)', 'Composite'],
+      datasets: [{
+        label: 'Skin Metrics',
+        data: [
+          (1 - d.acne_score) * 100,
+          (1 - d.pigmentation_score) * 100,
+          (1 - d.pore_score) * 100,
+          (1 - d.inflammation_score) * 100,
+          (1 - (d.under_eye_score||0)) * 100,
+          d.composite_skin_score,
+        ],
+        backgroundColor: 'rgba(201,168,76,0.1)',
+        borderColor: '#c9a84c',
+        borderWidth: 1.5,
+        pointBackgroundColor: '#c9a84c',
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          grid: { color: '#1e2733' },
+          angleLines: { color: '#1e2733' },
+          pointLabels: { color: '#4a5a6e', font: { size: 9, family: 'DM Mono' } },
+          ticks: { display: false },
+        }
+      }
+    }
+  });
+
+  if (d.recommendations && d.recommendations.length) {
+    document.getElementById('skin-recs').innerHTML = `
+      <div style="margin-top:24px; margin-bottom:12px; font-size:10px; letter-spacing:0.15em; color:var(--text3); text-transform:uppercase;">Clinical Recommendations</div>
+      <div class="recs-list">
+        ${d.recommendations.map((r,i) => `
+          <div class="rec-item" style="animation-delay:${i*0.1}s">
+            <span class="rec-num">0${i+1}</span>
+            <span>${r}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+}
+
+// ── PHYSIQUE ──
+async function doPhysique() {
+  const body = {
+    height_cm: +document.getElementById('p-height').value,
+    weight_kg: +document.getElementById('p-weight').value,
+    body_fat_pct: +document.getElementById('p-bodyfat').value,
+    age: +document.getElementById('p-age').value,
+    activity_level: document.getElementById('p-activity').value,
+    goal: document.getElementById('p-goal').value,
+    training_days_per_week: +document.getElementById('p-days').value,
+    preferred_split: document.getElementById('p-split').value || undefined,
+  };
+  if (!body.height_cm || !body.weight_kg || !body.age) return showToast('Fill in all required fields.', true);
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'COMPUTING…';
+  try {
+    await api('/physique/physique_input', 'POST', body);
+    const [cal, work] = await Promise.all([
+      api('/physique/calorie_plan'),
+      api('/physique/workout_plan'),
+    ]);
+    renderPhysique(cal, work);
+    showToast('Plan generated');
+  } catch(e) { showToast('Error: ' + e.message, true); }
+  finally { btn.disabled = false; btn.textContent = 'CALCULATE PLAN'; }
+}
+
+function renderPhysique(cal, work) {
+  document.getElementById('physique-results').classList.remove('hidden');
+  document.getElementById('macro-row').innerHTML = `
+    <div class="macro-tile">
+      <div class="macro-tile-label">Target Calories</div>
+      <div class="macro-tile-val">${cal.target_calories}</div>
+      <div class="macro-tile-unit">kcal / day</div>
+    </div>
+    <div class="macro-tile">
+      <div class="macro-tile-label">Protein</div>
+      <div class="macro-tile-val">${cal.macros.protein_g}</div>
+      <div class="macro-tile-unit">grams / day</div>
+    </div>
+    <div class="macro-tile">
+      <div class="macro-tile-label">Carbohydrates</div>
+      <div class="macro-tile-val">${cal.macros.carbs_g}</div>
+      <div class="macro-tile-unit">grams / day</div>
+    </div>
+    <div class="macro-tile">
+      <div class="macro-tile-label">Fats</div>
+      <div class="macro-tile-val">${cal.macros.fat_g}</div>
+      <div class="macro-tile-unit">grams / day</div>
+    </div>
+  `;
+
+  document.getElementById('split-label').textContent = (work.split_name || '').toUpperCase().replace(/_/g,' ');
+
+  // Macro doughnut
+  if (window._macroDonut) window._macroDonut.destroy();
+  const donutCtx = document.getElementById('macro-doughnut').getContext('2d');
+  const pCal = cal.macros.protein_g * 4;
+  const cCal = cal.macros.carbs_g * 4;
+  const fCal = cal.macros.fat_g * 9;
+  window._macroDonut = new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Protein', 'Carbs', 'Fats'],
+      datasets: [{
+        data: [pCal, cCal, fCal],
+        backgroundColor: ['#c9a84c', '#4a9eff', '#2dd4a0'],
+        borderColor: '#0d1117',
+        borderWidth: 3,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '68%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#8a9bb0', font: { size: 10, family: 'DM Mono' }, padding: 16, boxWidth: 10 }
+        }
+      }
+    }
+  });
+
+  // Calorie bar
+  if (window._macroBar) window._macroBar.destroy();
+  const barCtx = document.getElementById('macro-bar').getContext('2d');
+  window._macroBar = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Protein', 'Carbs', 'Fats'],
+      datasets: [{
+        label: 'kcal',
+        data: [pCal, cCal, fCal],
+        backgroundColor: ['rgba(201,168,76,0.7)', 'rgba(74,158,255,0.7)', 'rgba(45,212,160,0.7)'],
+        borderColor: ['#c9a84c', '#4a9eff', '#2dd4a0'],
+        borderWidth: 1,
+        borderRadius: 2,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1e2733' }, ticks: { color: '#4a5a6e', font: { family: 'DM Mono', size: 10 } } },
+        y: { grid: { color: '#1e2733' }, ticks: { color: '#4a5a6e', font: { family: 'DM Mono', size: 10 } } },
+      }
+    }
+  });
+
+  const days = work.weekly_plan || work.plan || work || {};
+  document.getElementById('workout-plan').innerHTML = Object.entries(days).map(([day, data]) => {
+    let exercises = [];
+    if (Array.isArray(data)) {
+      exercises = data;
+    } else if (data && Array.isArray(data.exercises)) {
+      exercises = data.exercises;
+    } else if (data && typeof data === 'object') {
+      exercises = Object.values(data).filter(v => typeof v === 'object');
+    }
+    return `
+    <div class="workout-day">
+      <div class="workout-day-header">
+        <span>${day}</span>
+        <span>${exercises.length} exercises</span>
+      </div>
+      <table class="exercise-table">
+        <thead>
+          <tr>
+            <th>Exercise</th>
+            <th>Muscle Group</th>
+            <th>Sets</th>
+            <th>Reps</th>
+            <th>Rest</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${exercises.length ? exercises.map(ex => `
+            <tr>
+              <td>${ex.name || ex.exercise_name || '—'}</td>
+              <td><span class="chip">${ex.muscle_group || ex.muscle || '—'}</span></td>
+              <td>${ex.sets || '—'}</td>
+              <td>${ex.reps || '—'}</td>
+              <td>${ex.rest_seconds || ex.rest || '—'}s</td>
+            </tr>
+          `).join('') : '<tr><td colspan="5" style="color:var(--text3); text-align:center; padding:20px;">Rest Day</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+// ── HORMONE ──
+async function doHormone() {
+  const body = {
+    sleep_hours: +document.getElementById('h-sleep').value,
+    morning_sunlight_minutes: +document.getElementById('h-sun').value,
+    step_count: +document.getElementById('h-steps').value,
+    zinc_mg: +document.getElementById('h-zinc').value,
+    stress_rating: +document.getElementById('h-stress').value,
+  };
+  if (!body.sleep_hours) return showToast('Fill in all fields.', true);
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'LOGGING…';
+  try {
+    const d = await api('/hormone/daily_metrics', 'POST', body);
+    renderHormone(d);
+    showToast('Metrics logged');
+  } catch(e) { showToast('Error: ' + e.message, true); }
+  finally { btn.disabled = false; btn.textContent = 'LOG METRICS'; }
+}
+
+function renderHormone(d) {
+  document.getElementById('hormone-results').classList.remove('hidden');
+
+  const breakdown = d.score_breakdown || {};
+  const tiles = [
+    {label:'Overall Score', val: d.hormone_score?.toFixed(1), unit:'/100'},
+    {label:'Sleep', val: ((breakdown.sleep||0)*100).toFixed(0), unit:'pts'},
+    {label:'Sunlight', val: ((breakdown.sunlight||0)*100).toFixed(0), unit:'pts'},
+    {label:'Activity', val: ((breakdown.activity||0)*100).toFixed(0), unit:'pts'},
+    {label:'Micronutrient', val: ((breakdown.micronutrient||0)*100).toFixed(0), unit:'pts'},
+    {label:'Stress', val: ((breakdown.stress||0)*100).toFixed(0), unit:'pts'},
+  ];
+
+  document.getElementById('hormone-metrics-row').innerHTML = tiles.slice(0,4).map(t => `
+    <div class="metric-tile">
+      <div class="metric-tile-label">${t.label}</div>
+      <div class="metric-tile-value">${t.val}</div>
+      <div class="metric-tile-sub">${t.unit}</div>
+    </div>
+  `).join('');
+
+  // Radar chart
+  if (window._hormoneChart) window._hormoneChart.destroy();
+  const hCtx = document.getElementById('hormone-radar').getContext('2d');
+  window._hormoneChart = new Chart(hCtx, {
+    type: 'radar',
+    data: {
+      labels: ['Sleep', 'Sunlight', 'Activity', 'Micronutrient', 'Stress'],
+      datasets: [{
+        label: 'Score',
+        data: [
+          (breakdown.sleep||0)*100,
+          (breakdown.sunlight||0)*100,
+          (breakdown.activity||0)*100,
+          (breakdown.micronutrient||0)*100,
+          (breakdown.stress||0)*100,
+        ],
+        backgroundColor: 'rgba(45,212,160,0.1)',
+        borderColor: '#2dd4a0',
+        borderWidth: 1.5,
+        pointBackgroundColor: '#2dd4a0',
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          grid: { color: '#1e2733' },
+          angleLines: { color: '#1e2733' },
+          pointLabels: { color: '#4a5a6e', font: { size: 9, family: 'DM Mono' } },
+          ticks: { display: false },
+        }
+      }
+    }
+  });
+
+  if (d.recommendations && d.recommendations.length) {
+    document.getElementById('hormone-recs').innerHTML = `
+      <div style="margin-bottom:12px; font-size:10px; letter-spacing:0.15em; color:var(--text3); text-transform:uppercase;">Optimization Recommendations</div>
+      <div class="recs-list">
+        ${d.recommendations.map((r,i) => `
+          <div class="rec-item" style="animation-delay:${i*0.1}s">
+            <span class="rec-num">0${i+1}</span><span>${r}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+}
+
+// ── TOAST ──
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '') + ' show';
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── DRAG DROP ──
+const zone = document.getElementById('upload-zone');
+if (zone) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file) { selectedFile = file; const dt = new DataTransfer(); dt.items.add(file); document.getElementById('skin-file').files = dt.files; handleFileSelect({target:{files:[file]}}); }
+  });
+}
+</script>
+</body>
+</html>
